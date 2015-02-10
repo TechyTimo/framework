@@ -106,6 +106,19 @@ class DatabaseEloquentIntegrationTest extends PHPUnit_Framework_TestCase {
 	}
 
 
+	public function testListsRetrieval()
+	{
+		EloquentTestUser::create(['id' => 1, 'email' => 'taylorotwell@gmail.com']);
+		EloquentTestUser::create(['id' => 2, 'email' => 'abigailotwell@gmail.com']);
+
+		$simple = EloquentTestUser::oldest('id')->lists('users.email');
+		$keyed = EloquentTestUser::oldest('id')->lists('users.email', 'users.id');
+
+		$this->assertEquals(['taylorotwell@gmail.com', 'abigailotwell@gmail.com'], $simple);
+		$this->assertEquals([1 => 'taylorotwell@gmail.com', 2 => 'abigailotwell@gmail.com'], $keyed);
+	}
+
+
 	public function testFindOrFail()
 	{
 		EloquentTestUser::create(['id' => 1, 'email' => 'taylorotwell@gmail.com']);
@@ -136,6 +149,41 @@ class DatabaseEloquentIntegrationTest extends PHPUnit_Framework_TestCase {
 	{
 		EloquentTestUser::create(['id' => 1, 'email' => 'taylorotwell@gmail.com']);
 		EloquentTestUser::findOrFail([1, 2]);
+	}
+
+
+	public function testOneToOneRelationship()
+	{
+		$user = EloquentTestUser::create(['email' => 'taylorotwell@gmail.com']);
+		$user->post()->create(['name' => 'First Post']);
+
+		$post = $user->post;
+		$user = $post->user;
+
+		$this->assertInstanceOf('EloquentTestUser', $user);
+		$this->assertInstanceOf('EloquentTestPost', $post);
+		$this->assertEquals('taylorotwell@gmail.com', $user->email);
+		$this->assertEquals('First Post', $post->name);
+	}
+
+
+	public function testOneToManyRelationship()
+	{
+		$user = EloquentTestUser::create(['email' => 'taylorotwell@gmail.com']);
+		$user->posts()->create(['name' => 'First Post']);
+		$user->posts()->create(['name' => 'Second Post']);
+
+		$posts = $user->posts;
+		$post2 = $user->posts()->where('name', 'Second Post')->first();
+
+		$this->assertInstanceOf('Illuminate\Database\Eloquent\Collection', $posts);
+		$this->assertEquals(2, $posts->count());
+		$this->assertInstanceOf('EloquentTestPost', $posts[0]);
+		$this->assertInstanceOf('EloquentTestPost', $posts[1]);
+		$this->assertInstanceOf('EloquentTestPost', $post2);
+		$this->assertEquals('Second Post', $post2->name);
+		$this->assertInstanceOf('EloquentTestUser', $post2->user);
+		$this->assertEquals('taylorotwell@gmail.com', $post2->user->email);
 	}
 
 
@@ -230,11 +278,11 @@ class EloquentTestUser extends Eloquent {
 	public function friends() {
 		return $this->belongsToMany('EloquentTestUser', 'friends', 'user_id', 'friend_id');
 	}
-	public function friend() {
-		return $this->hasOne('EloquentTestUser', 'user_id', 'friend_id');
-	}
 	public function posts() {
 		return $this->hasMany('EloquentTestPost', 'user_id');
+	}
+	public function post() {
+		return $this->hasOne('EloquentTestPost', 'user_id');
 	}
 	public function photos() {
 		return $this->morphMany('EloquentTestPhoto', 'imageable');

@@ -22,6 +22,7 @@ use Illuminate\Foundation\Console\RequestMakeCommand;
 use Illuminate\Foundation\Console\ProviderMakeCommand;
 use Illuminate\Foundation\Console\HandlerEventCommand;
 use Illuminate\Foundation\Console\ClearCompiledCommand;
+use Illuminate\Foundation\Console\EventGenerateCommand;
 use Illuminate\Foundation\Console\VendorPublishCommand;
 use Illuminate\Foundation\Console\HandlerCommandCommand;
 
@@ -46,6 +47,7 @@ class ArtisanServiceProvider extends ServiceProvider {
 		'ConfigCache' => 'command.config.cache',
 		'ConfigClear' => 'command.config.clear',
 		'ConsoleMake' => 'command.console.make',
+		'EventGenerate' => 'command.event.generate',
 		'EventMake' => 'command.event.make',
 		'Down' => 'command.down',
 		'Environment' => 'command.environment',
@@ -165,6 +167,19 @@ class ArtisanServiceProvider extends ServiceProvider {
 	 *
 	 * @return void
 	 */
+	protected function registerEventGenerateCommand()
+	{
+		$this->app->singleton('command.event.generate', function()
+		{
+			return new EventGenerateCommand;
+		});
+	}
+
+	/**
+	 * Register the command.
+	 *
+	 * @return void
+	 */
 	protected function registerEventMakeCommand()
 	{
 		$this->app->singleton('command.event.make', function($app)
@@ -232,7 +247,7 @@ class ArtisanServiceProvider extends ServiceProvider {
 	 */
 	protected function registerKeyGenerateCommand()
 	{
-		$this->app->singleton('command.key.generate', function($app)
+		$this->app->singleton('command.key.generate', function()
 		{
 			return new KeyGenerateCommand;
 		});
@@ -336,7 +351,7 @@ class ArtisanServiceProvider extends ServiceProvider {
 	 */
 	protected function registerServeCommand()
 	{
-		$this->app->singleton('command.serve', function($app)
+		$this->app->singleton('command.serve', function()
 		{
 			return new ServeCommand;
 		});

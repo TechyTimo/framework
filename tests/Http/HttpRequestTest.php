@@ -1,8 +1,8 @@
 <?php
 
 use Mockery as m;
-use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 class HttpRequestTest extends PHPUnit_Framework_TestCase {
 
@@ -128,6 +128,24 @@ class HttpRequestTest extends PHPUnit_Framework_TestCase {
 		$this->assertFalse($request->ajax());
 		$request = Request::create('/', 'GET', array(), array(), array(), array('HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'), '{}');
 		$this->assertTrue($request->ajax());
+		$request = Request::create('/', 'POST');
+		$request->headers->set('X-Requested-With', 'XMLHttpRequest');
+		$this->assertTrue($request->ajax());
+		$request->headers->set('X-Requested-With', '');
+		$this->assertFalse($request->ajax());
+	}
+
+
+	public function testPjaxMethod()
+	{
+		$request = Request::create('/', 'GET', array(), array(), array(), array('HTTP_X_PJAX' => 'true'), '{}');
+		$this->assertTrue($request->pjax());
+		$request->headers->set('X-PJAX', 'false');
+		$this->assertTrue($request->pjax());
+		$request->headers->set('X-PJAX', null);
+		$this->assertFalse($request->pjax());
+		$request->headers->set('X-PJAX', '');
+		$this->assertFalse($request->pjax());
 	}
 
 
@@ -137,6 +155,26 @@ class HttpRequestTest extends PHPUnit_Framework_TestCase {
 		$this->assertFalse($request->secure());
 		$request = Request::create('https://example.com', 'GET');
 		$this->assertTrue($request->secure());
+	}
+
+
+	public function testExistsMethod()
+	{
+		$request = Request::create('/', 'GET', ['name' => 'Taylor']);
+		$this->assertTrue($request->exists('name'));
+		$this->assertFalse($request->exists('foo'));
+		$this->assertFalse($request->exists('name', 'email'));
+
+		$request = Request::create('/', 'GET', ['name' => 'Taylor', 'email' => 'foo']);
+		$this->assertTrue($request->exists('name'));
+		$this->assertTrue($request->exists('name', 'email'));
+
+		$request = Request::create('/', 'GET', ['foo' => ['bar', 'bar']]);
+		$this->assertTrue($request->exists('foo'));
+
+		$request = Request::create('/', 'GET', ['foo' => '', 'bar' => null]);
+		$this->assertTrue($request->exists('foo'));
+		$this->assertTrue($request->exists('bar'));
 	}
 
 
@@ -417,6 +455,25 @@ class HttpRequestTest extends PHPUnit_Framework_TestCase {
 		$request = Request::create('/', 'GET', array(), array(), array(), array('HTTP_ACCEPT' => 'application/json'));
 		$request->setUserResolver(function() { return 'user'; });
 		$this->assertEquals('user', $request->user());
+	}
+
+
+	public function testCreateFromBase()
+	{
+		$body = [
+			'foo' => 'bar',
+			'baz' => ['qux'],
+		];
+
+		$server = array(
+			'CONTENT_TYPE' => 'application/json',
+		);
+
+		$base = SymfonyRequest::create('/', 'GET', array(), array(), array(), $server, json_encode($body));
+
+		$request = Request::createFromBase($base);
+
+		$this->assertEquals($request->request->all(), $body);
 	}
 
 }

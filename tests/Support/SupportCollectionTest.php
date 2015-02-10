@@ -128,7 +128,8 @@ class SupportCollectionTest extends PHPUnit_Framework_TestCase {
 	{
 		$c = new Collection([['v' => 1], ['v' => 2], ['v' => 3], ['v' => '3'], ['v' => 4]]);
 
-		$this->assertEquals([['v' => 3], ['v' => '3']], $c->where('v', 3)->values()->all());
+		$this->assertEquals([['v' => 3]], $c->where('v', 3)->values()->all());
+		$this->assertEquals([['v' => 3], ['v' => '3']], $c->whereLoose('v', 3)->values()->all());
 	}
 
 
@@ -484,8 +485,12 @@ class SupportCollectionTest extends PHPUnit_Framework_TestCase {
 	public function testKeyByAttribute()
 	{
 		$data = new Collection([['rating' => 1, 'name' => '1'], ['rating' => 2, 'name' => '2'], ['rating' => 3, 'name' => '3']]);
+
 		$result = $data->keyBy('rating');
 		$this->assertEquals([1 => ['rating' => 1, 'name' => '1'], 2 => ['rating' => 2, 'name' => '2'], 3 => ['rating' => 3, 'name' => '3']], $result->all());
+
+		$result = $data->keyBy(function($item){ return $item['rating'] * 2; });
+		$this->assertEquals([2 => ['rating' => 1, 'name' => '1'], 4 => ['rating' => 2, 'name' => '2'], 6 => ['rating' => 3, 'name' => '3']], $result->all());
 	}
 
 
