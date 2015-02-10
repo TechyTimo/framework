@@ -49,7 +49,7 @@ class MigrateCommand extends BaseCommand {
 	 */
 	public function fire()
 	{
-		if ( ! $this->confirmToProceed("About to run ".$this->name)) return;
+		if ( ! $this->confirmToProceed()) return;
 
 		$this->prepareDatabase();
 

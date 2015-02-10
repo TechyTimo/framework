@@ -13,7 +13,7 @@ trait ConfirmableTrait {
 	 */
 	public function confirmToProceed($warning, Closure $callback = null)
 	{
-		$warning .= '. Check if your application is in Production!';
+		$warning = 'About to run '.$this->name.'. Are you sure you want to do this in production mode?';
 		$shouldConfirm = $callback ?: $this->getDefaultConfirmCallback();
 
 		if (call_user_func($shouldConfirm))
